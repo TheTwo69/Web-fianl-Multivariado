@@ -1,0 +1,501 @@
+:root {
+  --shell: #cfd5de;
+  --bezel: #0b0e13;
+  --paper: #f5e3b5;
+  --ink: #20201f;
+  --border: #2c2318;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color: #eee;
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px),
+    radial-gradient(ellipse at center, #1a202c 0%, #0a0c12 100%);
+  background-position: 
+    0 0,
+    0 0,
+    center;
+  background-size: 
+    30px 30px,
+    30px 30px,
+    cover;
+  background-repeat: 
+    repeat,
+    repeat,
+    no-repeat;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.console {
+  width: min(78vw, 760px);
+  aspect-ratio: 4/3;
+  background: var(--shell);
+  border-radius: 24px;
+  padding: 18px;
+  position: relative;
+  box-shadow: 0 32px 80px rgba(0,0,0,.55), inset 0 0 0 8px #a9b1bc;
+  z-index: 2;
+}
+
+.bezel {
+  position: absolute;
+  inset: 14px;
+  background: var(--bezel);
+  border-radius: 18px;
+  padding: 10px;
+  display: grid;
+  grid-template-rows: 60% 1fr;
+  gap: 14px;
+}
+
+.screen {
+  border-radius: 16px;
+  border: 5px solid #05060c;
+  overflow: hidden;
+  position: relative;
+  background: url("/assets/images/robot-pixelated.png") left 28px bottom 24px/140px auto no-repeat,
+      url("/assets/images/console-background.png") center/cover no-repeat;
+  image-rendering: pixelated;
+}
+
+.power-button {
+  position: absolute;
+  top: 10px; 
+  right: 10px; 
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--shell);
+  border: 2px solid #a9b1bc;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.1s;
+}
+
+.power-button:active {
+  background: #a9b1bc;
+  box-shadow: inset 0 3px 5px rgba(0,0,0,0.6);
+  transform: translateY(1px);
+}
+
+.screen.screen-off {
+  background: #000000;
+  border-color: #111;
+}
+
+.robot-eyes-wrapper {
+  position: absolute;
+  left: 90px;
+  bottom: 120px; 
+}
+
+.robot-eye-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px; 
+}
+
+.robot-eye-pixel {
+  position: relative;
+  transform-origin: center;
+  width: 10px;
+  height: 12px;
+  box-shadow: 0 0 0 2px #000;
+  border-radius: 0;
+}
+
+.bubble {
+  position: absolute;
+  background: var(--paper);
+  color: var(--ink);
+  border: 4px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  filter: drop-shadow(6px 6px 0 #000);
+}
+
+.bubble.title-bubble {
+  left: 240px;
+  top: 50px;
+  max-width: 55%; 
+}
+
+.bubble:after {
+  content: "";
+  position: absolute;
+  left: 28px;
+  bottom: -14px;
+  width: 18px;
+  height: 18px;
+  background: var(--paper);
+  border-left: 4px solid var(--border);
+  border-bottom: 4px solid var(--border);
+  transform: skewX(-15deg) rotate(45deg);
+}
+
+.bubble.small {
+  top: 130px; 
+  left: 240px; 
+  max-width: 68%;
+}
+
+.menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.link {
+  display: block;
+  text-decoration: none;
+  color: var(--ink);
+  background: #fff2cc;
+  border: 4px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: 4px 4px 0 #000;
+  transition: .12s transform;
+}
+
+.link.selected {
+  outline: 4px solid #9575cd;
+  box-shadow: 3px 3px 0 #9f93fc;
+  background: #fff9e0;
+  color: #391a73;
+}
+
+.link:hover, .link:focus {
+  transform: translate(-2px,-2px);
+  box-shadow: 6px 6px 0 #000;
+  outline: none;
+}
+
+.hud {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  color: #b7c2d7;
+  font-size: 12px;
+  opacity: .85;
+}
+
+.controls-bg.custom-controls {
+  background: url('/assets/control-bg.jpg') center/cover no-repeat;
+  border-radius: 16px;
+  box-shadow: 0 6px 32px #000a;
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+.dpad-gba-abs {
+  position: absolute;
+  left: 106px;
+  top: 60px;
+  width: 138px;
+  height: 138px;
+  display: grid;
+  grid-template-areas:
+    ". up ."
+    "left mid right"
+    ". down .";
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  pointer-events: none;
+}
+
+.gba-btn {
+  width: 46px;
+  height: 46px;
+  background: #fff;
+  color: #222;
+  border: 2.5px solid #bdc2ce;
+  border-radius: 9px;
+  font-size: 29px;
+  line-height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 3px 7px 18px #8893, 0 2px 0 #fff8 inset;
+  padding: 0;
+  pointer-events: all;
+  transition: filter 0.17s, box-shadow 0.17s;
+}
+
+.gba-btn.up { grid-area: up; }
+.gba-btn.down { grid-area: down; }
+.gba-btn.left { grid-area: left; }
+.gba-btn.right { grid-area: right; }
+
+.gba-btn:after {
+  font-weight: bold;
+  font-size: 22px;
+}
+
+.gba-btn.up:after    { content: '\2191'; }
+.gba-btn.down:after  { content: '\2193'; }
+.gba-btn.left:after  { content: '\2190'; }
+.gba-btn.right:after { content: '\2192'; }
+
+.gba-btn:active, .gba-ab:active {
+  filter: brightness(.85);
+}
+
+.gba-ab.gba-b-abs, .gba-ab.gba-a-abs {
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 32px;
+  font-weight: bold;
+  outline: none;
+  box-shadow: 3px 7px 18px #8893, 0 2px 0 #fff8 inset;
+  border: 2.5px solid #bdc2ce;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.17s;
+}
+
+.gba-ab.gba-b-abs {
+  color: #c361a2;
+  left: 417px;
+  top: 40px;
+}
+
+.gba-ab.gba-a-abs {
+  color: #289897;
+  left: 571px;
+  top: 40px;
+}
+
+@media (max-width:700px) {
+  .console {
+    width: 98vw;
+    padding: 10px;
+    box-shadow: 0 16px 40px rgba(0,0,0,.55), inset 0 0 0 4px #a9b1bc;
+    aspect-ratio: unset; 
+    height: 95vh;
+  }
+
+  .bezel {
+    inset: 8px;
+    padding: 8px;
+    gap: 10px;
+    grid-template-rows: 55% 1fr;
+  }
+
+  .controls-bg.custom-controls {
+    width: auto;
+    height: auto;
+    background-size: cover;
+  }
+
+  .dpad-gba-abs { 
+    left: 10vw; 
+    top: 20%; 
+    width: 100px;
+    height: 100px; 
+  }
+  .gba-btn { 
+    width:33px;
+    height:33px;
+    font-size:18px;
+    line-height:1; 
+  }
+  .gba-ab.gba-b-abs { 
+    left: 50vw; 
+    top: 40%; 
+    width:52px; 
+    height:52px; 
+    font-size:24px; 
+  }
+  .gba-ab.gba-a-abs { 
+    left: 70vw; 
+    top: 20%; 
+    width:52px; 
+    height:52px; 
+    font-size:24px; 
+  }
+  
+  .robot-eyes-wrapper {
+    left: 10.5vw;
+    bottom: 23vw;
+    transform: scale(0.9);
+  }
+
+  .bubble.title-bubble {
+    left: 20vw;
+    top: 10px;
+    max-width: 75vw;
+    padding: 6px 8px;
+    font-size: 10px;
+    white-space: normal;
+  }
+  .bubble:after { 
+    display: none;
+  }
+
+  .bubble.small {
+    left: 20vw;
+    top: 110px;
+    max-width: 75%;
+    padding: 8px;
+  }
+  
+  .menu {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .link {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .hud {
+    font-size: 9px;
+    white-space: nowrap;
+    right: 10px;
+    bottom: 10px;
+    opacity: 0.7;
+  }
+
+  .power-button {
+    top: 12px;
+    right: 12px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@keyframes move-stars-slow {
+  from { background-position: 0 0; }
+  to { background-position: -100px 30px; }
+}
+
+@keyframes move-stars-fast {
+  from { background-position: 0 0; }
+  to { background-position: -180px 60px; }
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+body::before {
+  background-image:
+    radial-gradient(2px 2px, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px, rgba(255,255,255,0.2), transparent),
+    radial-gradient(2px 2px, rgba(255,255,255,0.2), transparent),
+    radial-gradient(1px 1px, rgba(255,255,255,0.2), transparent),
+    radial-gradient(2px 2px, rgba(255,255,255,0.2), transparent);
+  background-position:
+    10px 20px,
+    100px 150px,
+    200px 80px,
+    250px 280px,
+    150px 250px;
+  background-size: 300px 300px;
+  animation: move-stars-slow 20s linear infinite;
+}
+
+body::after {
+  background-image:
+    radial-gradient(1px 1px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1px 1px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1px 1px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1px 1px, rgba(255,255,255,0.7), transparent),
+    radial-gradient(1px 1px, rgba(255,255,255,0.7), transparent);
+  background-position:
+    50px 10px,
+    80px 180px,
+    120px 100px,
+    180px 50px,
+    20px 140px;
+  background-size: 200px 200px;
+  animation: move-stars-fast 12s linear infinite;
+}
+
+.typewriter-cursor {
+  margin-left: 2px;
+}
+
+/* --- AÑADIDO: ESTILOS PARA EL JUEGO DE SNAKE --- */
+.snake-game-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--ink); /* Fondo del juego */
+  border: 4px solid var(--border);
+  border-radius: 8px;
+  image-rendering: pixelated;
+  /* La cuadrícula se dibuja con CSS en el fondo del .screen */
+}
+
+.snake-segment {
+  position: absolute;
+  background-color: var(--paper); /* Color de la serpiente */
+  box-shadow: 0 0 0 2px var(--ink); /* Borde pixelado */
+  z-index: 2;
+}
+
+.snake-food {
+  position: absolute;
+  background-color: #9575cd; /* Color de la comida (morado) */
+  box-shadow: 0 0 0 2px var(--ink);
+  z-index: 1;
+}
+
+.snake-game-over {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--paper);
+  text-align: center;
+  z-index: 10;
+  font-size: 24px;
+}
+
+.snake-game-over .score {
+  font-size: 18px;
+  margin-top: 10px;
+}
+
+.snake-game-over .restart {
+  font-size: 14px;
+  margin-top: 20px;
+  color: #9575cd; /* Morado */
+}
+.snake-game-over .back {
+  font-size: 14px;
+  margin-top: 8px;
+  color: #c361a2; /* Rosa */
+}

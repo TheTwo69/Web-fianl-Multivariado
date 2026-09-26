@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación de Optimización Energética</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#020617', // Slate-950 (Fondo profundo)
+                        'secondary': '#1e293b', // Slate-800 (Fondo de tarjeta)
+                        'accent': '#4ade80', // Emerald-400 (Verde neón, llamativo)
+                        'highlight': '#c084fc', // Purple-400 (Énfasis secundario)
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            min-height: 100vh;
+            scroll-behavior: smooth; 
+        }
+        
+        #visualization-container {
+            width: 100%;
+            height: 70vh; 
+            min-height: 700px; 
+            background-color: #0c1426;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(74, 222, 128, 0.1);
+            border: 1px solid #334155;
+        }
+        
+        .data-card {
+            border-radius: 0.75rem; 
+            padding: 1.5rem;
+            height: 100%;
+            position: relative; 
+            z-index: 2; 
+        }
+        .btn-action {
+            transition: all 0.2s;
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.6);
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+        }
+        .btn-action:hover {
+            box-shadow: 0 0 25px rgba(74, 222, 128, 0.8);
+            transform: translateY(-1px);
+        }
+        #main-formula {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background-color: #1a243c;
+            border-radius: 0.5rem;
+            border: 1px solid #4ade80;
+            color: #f0fdf4;
+            font-family: monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        #analysis-output h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ade80;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        #analysis-output p, #analysis-output li {
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+        #analysis-output ul {
+            list-style: disc;
+            padding-left: 20px;
+            margin-top: 0.5rem;
+        }
+    </style>
+
+    <style>
+#particle-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: -1;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.7;
+    animation: particle-fall linear infinite;
+}
+
+@keyframes particle-fall {
+    0% {
+        transform: translateY(-10vh);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(110vh);
+        opacity: 0;
+    }
+}
+</style>
+
+    <style>
+        :root {
+            --electric-border-color: #00fffc;
+            --electric-light-color: oklch(from var(--electric-border-color) l c h);
+            --gradient-color: oklch(from var(--electric-border-color) 0.3 calc(c / 2) h / 0.4);
+            --color-neutral-900: #1e293b; 
+        }
+        .svg-container {
+            position: absolute;
+        }
+
+        .card-container {
+    border-radius: 24px;
+    position: relative;
+    background: linear-gradient(-30deg,
+            var(--gradient-color),
+            transparent,
+            var(--gradient-color)),
+        linear-gradient(to bottom,
+            var(--color-neutral-900),
+            var(--color-neutral-900));
+    
+    overflow: visible;   /* 🔥 NECESARIO para que los brillos se expandan */
+}
+
+.inner-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    overflow: visible;  /* 🔥 sin esto, la electricidad se recorta arriba */
+}
+
+        
+        /* --- 1. CORRECCIÓN EN BORDER-OUTER --- */
+        .border-outer {
+            border: 2px solid rgba(72, 186, 221, 0.5);
+            border-radius: 24px;
+            /* Se eliminó el padding-right y padding-bottom */
+            height: 100%; 
+        }
+        
+        /* --- 2. CORRECCIÓN EN MAIN-CARD --- */
+        .main-card {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 24px;
+            border: 2px solid var(--electric-border-color);
+            /* Se eliminó el margin-top y margin-left */
+            filter: url(#turbulent-displace);
+        }
+        
+        .glow-layer-1 {
+            border: 2px solid rgba(72, 166, 221, 0.6);
+            border-radius: 24px;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            filter: blur(1px);
+        }
+        .glow-layer-2 {
+            border: 2px solid var(--electric-light-color);
+            border-radius: 24px;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            filter: blur(4px);
+        }
+        .overlay-1 {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 24px;
+            opacity: 1;
+            mix-blend-mode: overlay;
+            transform: scale(1.1);
+            filter: blur(16px);
+            background: linear-gradient(-30deg,
+                    white,
+                    transparent 30%,
+                    transparent 70%,
+                    white);
+        }
+        .overlay-2 {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 24px;
+            opacity: 0.5;
+            mix-blend-mode: overlay;
+            transform: scale(1.1);
+            filter: blur(16px);
+            background: linear-gradient(-30deg,
+                    white,
+                    transparent 30%,
+                    transparent 70%,
+                    white);
+        }
+        .background-glow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 24px;
+            filter: blur(32px);
+            transform: scale(1.1);
+            opacity: 0.1; /* Opacidad sutil */
+            z-index: -1;
+            background: linear-gradient(-30deg,
+                    var(--electric-light-color),
+                    transparent,
+                    var(--electric-border-color));
+        }
+        .content-container {
+            position: relative;
+            z-index: 2; 
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+/* 💡 Electricidad suave para los cuadros inferiores */
+.low-electricity::before {
+    filter: blur(6px) !important;
+    opacity: 0.15 !important;
+    animation: electricFlow 8s linear infinite !important;
+}
+
+.low-electricity::after {
+    opacity: 0.25 !important;
+    filter: brightness(1) !important;
+    animation: electricPulse 5s ease-in-out infinite !important;
+}
+</style>
+
+</head>
+<body class="p-4 sm:p-8">
+
+    <svg class="svg-container">
+        <defs>
+            <filter id="turbulent-displace" colorInterpolationFilters="sRGB" x="-20%" y="-20%" width="140%"
+                height="140%">
+                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise1" seed="1" />
+                <feOffset in="noise1" dx="0" dy="0" result="offsetNoise1">
+                    <animate attributeName="dy" values="700; 0" dur="6s" repeatCount="indefinite"
+                        calcMode="linear" />
+                </feOffset>
+                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise2" seed="1" />
+                <feOffset in="noise2" dx="0" dy="0" result="offsetNoise2">
+                    <animate attributeName="dy" values="0; -700" dur="6s" repeatCount="indefinite"
+                        calcMode="linear" />
+                </feOffset>
+                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise1" seed="2" />
+                <feOffset in="noise1" dx="0" dy="0" result="offsetNoise3">
+                    <animate attributeName="dx" values="490; 0" dur="6s" repeatCount="indefinite"
+                        calcMode="linear" />
+                </feOffset>
+                <feTurbulence type="turbulence" baseFrequency="0.02" numOctaves="10" result="noise2" seed="2" />
+                <feOffset in="noise2" dx="0" dy="0" result="offsetNoise4">
+                    <animate attributeName="dx" values="0; -490" dur="6s" repeatCount="indefinite"
+                        calcMode="linear" />
+                </feOffset>
+                <feComposite in="offsetNoise1" in2="offsetNoise2" result="part1" />
+                <feComposite in="offsetNoise3" in2="offsetNoise4" result="part2" />
+                <feBlend in="part1" in2="part2" mode="color-dodge" result="combinedNoise" />
+                <feDisplacementMap in="SourceGraphic" in2="combinedNoise" scale="30" xChannelSelector="R"
+                    yChannelSelector="B" />
+            </filter>
+        </defs>
+    </svg>
+    <div id="particle-container"></div>
+
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-center mb-6 text-accent uppercase tracking-wider">
+            Optimización Energética: Cálculo Multivariable
+        </h1>
+        <p class="text-center mb-8 text-slate-300">
+            Modelo de Potencia (kW): <span id="main-formula">E(x, y) = x² + 0.5y² + 0.6xy + 4x + 3y + 10</span>
+        </p>
+
+        <div class="flex gap-[20px] flex-wrap mb-8">
+
+            <div class="w-full">
+                <div class="card-container">
+                    <div class="inner-container">
+                        <div class="border-outer">
+                            <div class="main-card"></div>
+                        </div>
+                        <div class="glow-layer-1"></div>
+                        <div class="glow-layer-2"></div>
+                    </div>
+                    <div class="overlay-1"></div>
+                    <div class="overlay-2"></div>
+                    <div class="background-glow"></div>
+                    <div class="content-container data-card flex flex-col justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-4 text-highlight">Parámetros de Simulación</h2>
+                            <div class="mb-5">
+                                <label for="carga-cpu" class="block mb-2 text-slate-300">
+                                    Carga CPU (x) [0-10]: <span id="carga-value" class="font-bold text-accent">5.0</span>
+                                    (<span id="carga-value-ui" class="font-bold text-highlight">50.0%</span>)
+                                </Zabel>
+                                <input type="range" id="carga-cpu" min="0" max="10" step="0.1" value="5.0" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-accent">
+                            </div>
+                            <div class="mb-6">
+                                <label for="temperatura" class="block mb-2 text-slate-300">
+                                    Temperatura (y) [0-10]: <span id="temperatura-value" class="font-bold text-accent">5.0</span>
+                                    (<span id="temp-value-ui" class="font-bold text-highlight">70.0 °C</span>)
+                                </label>
+                                <input type="range" id="temperatura" min="0" max="10" step="0.1" value="5.0" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-accent">
+                            </div>
+                            <div class="mb-6">
+                                <label for="horas-uso" class="block mb-2 text-slate-300">
+                                    Horas de Uso (h) [0 - 43800]:
+                                </label>
+                                <input type="number" id="horas-uso" min="0" max="43800" step="1" value="1.0" class="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white font-mono text-lg focus:ring-highlight focus:border-highlight">
+                                <span id="horas-value" class="hidden">1.0</span>
+                            </div>
+                            <h3 class="text-xl font-semibold mb-3 text-slate-300 border-t border-slate-700 pt-4">Energía Total Calculada</h3>
+                            <p class="text-4xl font-extrabold mb-4 text-accent">
+                                <span id="energia-total-result" class="text-shadow-lg">--</span>
+                                <span class="text-2xl text-slate-400 font-normal ml-2">kWh</span>
+                            </p>
+                            <p class="text-xs text-slate-400 border-t border-slate-700 pt-2 mt-4">
+                                <i class="fa-solid fa-circle-info mr-1 text-highlight"></i>
+                                El mínimo global matemático se encuentra en (-1.34, -2.19), fuera del dominio físico de trabajo.
+                            </p>
+                        </div>
+                        <button id="save-data-btn" class="mt-6 w-full py-3 bg-accent text-primary font-bold rounded-lg btn-action hover:bg-emerald-300">
+                            <i class="fa-solid fa-database mr-2"></i> REGISTRAR ESTA SIMULACIÓN
+                        </button>
+                        <div id="message-box" class="mt-2 text-center text-sm text-accent hidden"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full">
+               <div class="card-container low-electricity">
+                    <div class="inner-container">
+
+
+
+
+
+
+
+
+
+
+
+                        <div class="border-outer">
+                            <div class="main-card"></div>
+                        </div>
+                        <div class="glow-layer-1"></div>
+                        <div class="glow-layer-2"></div>
+                    </div>
+                    <div class="overlay-1"></div>
+                    <div class="overlay-2"></div>
+                    <div class="background-glow"></div>
+                    <div class="content-container data-card p-0">
+                        <div id="visualization-container"></div>
+                        <div class="p-4 text-center text-sm text-slate-400">
+                            <i class="fa-solid fa-arrows-rotate mr-1 text-highlight"></i> Arrastra para rotar la superficie de consumo (Eje Z).
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full">
+               <div class="card-container low-electricity">
+                    <div class="inner-container">
+                        <div class="border-outer">
+                            <div class="main-card"></div>
+                        </div>
+                        <div class="glow-layer-1"></div>
+                        <div class="glow-layer-2"></div>
+                    </div>
+                    <div class="overlay-1"></div>
+                    <div class="overlay-2"></div>
+                    <div class="background-glow"></div>
+                    <div class="content-container data-card">
+                        <div class="border-t border-slate-700 pt-4">
+                            <h4 class="text-lg font-semibold mb-3 text-highlight">Simulación por Lotes</h4>
+                            <p class="text-xs text-slate-400 mb-3">
+                                Guarda múltiples registros (hasta 500) con los parámetros (x, y, h) actuales.
+                            </p>
+                            <label for="sim-count-input" class="block mb-2 text-slate-300 text-sm">
+                                Número de Simulaciones (Max 500):
+                            </label>
+                            <input type="number" id="sim-count-input" min="1" max="500" step="1" value="10" class="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white font-mono text-lg focus:ring-highlight focus:border-highlight">
+                            <div class="mt-4 flex items-center">
+                                <input id="random-batch-checkbox" type="checkbox" class="h-4 w-4 rounded bg-slate-700 border-slate-600 text-accent focus:ring-accent">
+                                <label for="random-batch-checkbox" class="ml-2 block text-sm text-slate-300">
+                                    Generar simulaciones con valores aleatorios (x, y, h)
+                                </label>
+                            </div>
+                            <button id="batch-save-btn" class="mt-4 w-full py-3 bg-highlight text-primary font-bold rounded-lg btn-action hover:bg-purple-300" style="box-shadow: 0 0 15px rgba(192, 132, 252, 0.6);">
+                                <i class="fa-solid fa-bolt mr-2"></i> EJECUTAR LOTE
+                            </button>
+                            <div id="batch-message-box" class="mt-2 text-center text-sm text-accent hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full">
+                <div class="card-container low-electricity">
+                    <div class="inner-container">
+                        <div class="border-outer">
+                            <div class="main-card"></div>
+                        </div>
+                        <div class="glow-layer-1"></div>
+                        <div class="glow-layer-2"></div>
+                    </div>
+                    <div class="overlay-1"></div>
+                    <div class="overlay-2"></div>
+                    <div class="background-glow"></div>
+                    <div class="content-container data-card">
+                        <h2 class="text-2xl font-bold mb-4 text-highlight flex items-center">
+                            <i class="fa-solid fa-brain mr-2"></i> Análisis de Optimización por Gradiente ✨
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="border-r border-slate-700 pr-6">
+                                <h3 class="text-lg font-semibold mb-3 text-slate-300">Parámetros del Gradiente Actual</h3>
+                                <table class="w-full mb-4 text-sm text-slate-300">
+                                    <thead>
+                                        <tr class="text-left border-b border-slate-600">
+                                            <th class="py-1">Variable</th>
+                                            <th class="py-1">Valor Modelo (0-10)</th>
+                                            <th class="py-1">Sensibilidad ($\partial E$)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="py-1">Carga (x)</td>
+                                            <td class="py-1 font-mono text-accent" id="analysis-x-val">5.00</td>
+                                            <td class="py-1 font-mono text-highlight" id="analysis-dEdx">--</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1">Temperatura (y)</td>
+                                            <td class="py-1 font-mono text-accent" id="analysis-y-val">5.00</td>
+                                            <td class="py-1 font-mono text-highlight" id="analysis-dEdy">--</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <label for="gemini-context" class="block mb-2 text-slate-300 text-sm">Contexto Adicional (Opcional):</label>
+                                <input type="text" id="gemini-context" class="w-full p-2 rounded bg-slate-700 border border-slate-600 text-white text-sm focus:ring-accent focus:border-accent" placeholder="Añade contexto para un informe más detallado">
+                                <button id="analyze-btn" class="mt-4 w-full py-3 bg-highlight text-primary font-bold rounded-lg btn-action hover:bg-purple-300" style="box-shadow: 0 0 15px rgba(192, 132, 252, 0.6);">
+                                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> GENERAR INFORME TÉCNICO
+                                </button>
+                            </div>
+                            <div class="relative">
+                                <h3 class="text-lg font-semibold mb-3 text-slate-300">Informe de Estrategia de Optimización</h3>
+                                <div id="analysis-output" class="text-slate-300 overflow-y-auto max-h-[300px]">
+                                    <p class="text-center text-slate-500" id="analysis-placeholder">Haz clic en "GENERAR INFORME TÉCNICO" para obtener un análisis detallado basado en el gradiente de consumo.</p>
+                                </div>
+                                <div id="analysis-loading" class="absolute inset-0 bg-slate-800 bg-opacity-90 flex items-center justify-center rounded-lg hidden">
+                                    <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+                                    <span class="ml-4 text-accent font-semibold">Analizando...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full">
+                <div class="card-container low-electricity">
+                    <div class="inner-container">
+                        <div class="border-outer">
+                            <div class="main-card"></div>
+                        </div>
+                        <div class="glow-layer-1"></div>
+                        <div class="glow-layer-2"></div>
+                    </div>
+                    <div class="overlay-1"></div>
+                    <div class="overlay-2"></div>
+                    <div class="background-glow"></div>
+                    <div class="content-container data-card">
+                        <h2 class="text-2xl font-bold mb-4 text-highlight">Historial de Consumo</h2>
+                        <p class="text-xs text-slate-400 mb-4">
+                            <i class="fa-solid fa-users mr-1"></i> ID de Sesión: <span id="user-id-display" class="font-mono text-xs text-accent">Cargando...</span>
+                        </p>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-700">
+                                <thead class="bg-slate-700">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">ID Sim.</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Carga (x)</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Temp. (y)</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Horas (h)</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">E. Total (kWh)</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="data-table-body" class="divide-y divide-slate-800">
+                                    <tr><td colspan="6" class="px-4 py-2 text-center text-slate-500">Cargando historial...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> 
+        </div>
+
+    <script type="module">
+        // --- Tu JavaScript de Firebase (sin cambios) ---
+        // ... (Tu código de Firebase)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query, serverTimestamp, setLogLevel, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        const firebaseConfig = {
+          apiKey: "AIzaSyCB8TjA__id14d7SdgT8DWsznLvcf80jQs",
+          authDomain: "server-practic.firebaseapp.com",
+          projectId: "server-practic",
+          storageBucket: "server-practic.firebasestorage.app",
+          messagingSenderId: "474906728996",
+          appId: "1:474906728996:web:691e88b9f93f81b01816b1",
+          measurementId: "G-CRG3CYR26L"
+        };
+        
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        let db, auth, userId;
+        
+        async function initializeFirebase() {
+            try {
+                if (firebaseConfig.apiKey === "TU_API_key_DE_FIREBASE") {
+                    throw new Error("Configuración de Firebase no actualizada. Reemplaza el objeto 'firebaseConfig'.");
+                }
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                console.log("Firebase initialized. User ID:", userId);
+                document.getElementById('user-id-display').textContent = userId;
+                listenForData();
+            } catch (error) {
+                console.error("Error initializing Firebase:", error.message);
+                document.getElementById('user-id-display').textContent = "ERROR";
+                showMessageBox(`Error de Firebase: ${error.message}`, 'red');
+                showMessageBox(`Error de Firebase: ${error.message}`, 'batch-red');
+            }
+        }
+
+        async function saveData() {
+            if (!db || !userId) {
+                console.error("Firebase no está inicializado.");
+                showMessageBox("Error: Firebase no está inicializado.", 'red');
+                return;
+            }
+            const x = parseFloat(document.getElementById('carga-cpu').value);
+            const y = parseFloat(document.getElementById('temperatura').value);
+            const h = parseFloat(document.getElementById('horas-uso').value) || 0;
+            const E_instant = window.E(x, y); 
+            const E_total = E_instant * h;
+            try {
+                const dataCollectionPath = `/artifacts/${appId}/users/${userId}/simulations`;
+                await addDoc(collection(db, dataCollectionPath), {
+                    x: x, y: y, h: h, E_instant: E_instant, E_total: E_total,
+                    timestamp: serverTimestamp(), userId: userId 
+                });
+                showMessageBox("Simulación guardada con éxito.", 'green');
+            } catch (e) {
+                console.error("Error al añadir documento: ", e);
+                showMessageBox(`Error al guardar: ${e.message}`, 'red');
+            }
+        }
+
+        async function runBatchSimulation() {
+            if (!db || !userId) {
+                console.error("Firebase no está inicializado.");
+                showMessageBox("Error: Firebase no está inicializado.", 'batch-red');
+                return;
+            }
+            const simCountInput = document.getElementById('sim-count-input');
+            const batchBtn = document.getElementById('batch-save-btn');
+            const isRandom = document.getElementById('random-batch-checkbox').checked;
+            let count = parseInt(simCountInput.value);
+            if (isNaN(count) || count <= 0) {
+                showMessageBox('Número de simulaciones inválido.', 'batch-red');
+                return;
+            }
+            if (count > 500) { count = 500; simCountInput.value = "500"; }
+            batchBtn.disabled = true;
+            batchBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Procesando...';
+            showMessageBox(`Iniciando lote de ${count} simulaciones ${isRandom ? 'aleatorias' : 'fijas'}...`, 'batch-blue');
+            const x_slider = parseFloat(document.getElementById('carga-cpu').value);
+            const y_slider = parseFloat(document.getElementById('temperatura').value);
+            const h_fixed = parseFloat(document.getElementById('horas-uso').value) || 0;
+            try {
+                const batch = writeBatch(db);
+                const dataCollectionPath = `/artifacts/${appId}/users/${userId}/simulations`;
+                for (let i = 0; i < count; i++) {
+                    let simX, simY, simH, simE_instant, simE_total;
+                    if (isRandom) {
+                        simX = Math.random() * 10;
+                        simY = Math.random() * 10;
+                        simH = Math.random() * 43800;
+                    } else {
+                        simX = x_slider; simY = y_slider; simH = h_fixed;
+                    }
+                    simE_instant = window.E(simX, simY); 
+                    simE_total = simE_instant * simH;
+                    const newSimRef = doc(collection(db, dataCollectionPath));
+                    batch.set(newSimRef, {
+                        x: simX, y: simY, h: simH, 
+                        E_instant: simE_instant, E_total: simE_total,
+                        timestamp: serverTimestamp(), userId: userId
+                    });
+                }
+                await batch.commit();
+                showMessageBox(`${count} simulaciones guardadas con éxito en un lote.`, 'batch-green');
+            } catch (e) {
+                console.error("Error al ejecutar el lote: ", e);
+                showMessageBox(`Error en lote: ${e.message}`, 'batch-red');
+            } finally {
+                batchBtn.disabled = false;
+                batchBtn.innerHTML = '<i class="fa-solid fa-bolt mr-2"></i> EJECUTAR LOTE';
+            }
+        }
+
+        function listenForData() {
+            if (!db || !userId) return;
+            const dataCollectionPath = `/artifacts/${appId}/users/${userId}/simulations`;
+            const q = query(collection(db, dataCollectionPath)); 
+            onSnapshot(q, (snapshot) => {
+                const dataList = [];
+                snapshot.forEach((doc) => dataList.push({ id: doc.id, ...doc.data() }));
+                dataList.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+                renderData(dataList);
+            }, (error) => {
+                console.error("Error al escuchar datos:", error);
+                document.getElementById('data-table-body').innerHTML = `<tr><td colspan="6" class="px-4 py-2 text-center text-red-400">Error al cargar datos: ${error.message}</td></tr>`;
+            });
+        }
+
+        function renderData(data) {
+            const tableBody = document.getElementById('data-table-body');
+            tableBody.innerHTML = '';
+            if (data.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="px-4 py-2 text-center text-slate-500">No hay simulaciones guardadas.</td></tr>`;
+                return;
+            }
+            data.forEach((item) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-slate-800';
+                row.innerHTML = `
+                    <td class="px-4 py-2 text-xs text-slate-400">${item.id.substring(0, 5)}...</td>
+                    <td class="px-4 py-2 font-mono">${(item.x || 0).toFixed(2)}</td>
+                    <td class="px-4 py-2 font-mono">${(item.y || 0).toFixed(2)}</td>
+                    <td class="px-4 py-2 font-mono">${(item.h || 0).toFixed(1)}</td>
+                    <td class="px-4 py-2 font-bold text-accent">${(item.E_total || item.E || 0).toFixed(3)}</td>
+                    <td class="px-4 py-2">
+                        <button data-id="${item.id}" class="delete-btn text-highlight hover:text-red-400 transition duration-150">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const docId = e.currentTarget.getAttribute('data-id');
+                    deleteSimulation(docId);
+                });
+            });
+        }
+
+        async function deleteSimulation(docId) {
+            if (!db || !userId) return;
+            const dataCollectionPath = `/artifacts/${appId}/users/${userId}/simulations`;
+            showCustomConfirm('¿Estás seguro de que quieres eliminar esta simulación?', async () => {
+                try {
+                    await deleteDoc(doc(db, dataCollectionPath, docId));
+                    showMessageBox("Simulación eliminada.", 'green');
+                } catch (e) {
+                    console.error("Error al eliminar documento: ", e);
+                    showMessageBox(`Error al eliminar: ${e.message}`, 'red');
+                }
+            });
+        }
+
+        function showMessageBox(message, type) {
+            let box, colorClass;
+            switch(type) {
+                case 'green': box = document.getElementById('message-box'); colorClass = 'text-accent'; break;
+                case 'red': box = document.getElementById('message-box'); colorClass = 'text-red-400'; break;
+                case 'batch-green': box = document.getElementById('batch-message-box'); colorClass = 'text-accent'; break;
+                case 'batch-red': box = document.getElementById('batch-message-box'); colorClass = 'text-red-400'; break;
+                case 'batch-blue': box = document.getElementById('batch-message-box'); colorClass = 'text-blue-400'; break;
+                default: box = document.getElementById('message-box'); colorClass = 'text-slate-400';
+            }
+            box.textContent = message;
+            box.className = `mt-2 text-center text-sm font-semibold ${colorClass}`;
+            box.classList.remove('hidden');
+            setTimeout(() => { box.classList.add('hidden'); }, 4000);
+        }
+
+        function showCustomConfirm(message, onConfirm) {
+            if (window.confirm(message)) { onConfirm(); }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
+            document.getElementById('save-data-btn').addEventListener('click', saveData);
+            document.getElementById('batch-save-btn').addEventListener('click', runBatchSimulation);
+        });
+    </script>
+
+
+    <script>
+        // --- Tu JavaScript de Three.js (CON CORRECCIÓN DE BUG) ---
+        let scene, camera, renderer, surfaceMesh, controls, sphereIndicator;
+        const DOMAIN_SIZE = 10;
+        const MAX_E_SCALED = 15; 
+
+        window.E = function E(x, y) {
+            return x * x + 0.5 * y * y + 0.6 * x * y + 4 * x + 3 * y + 10;
+        }
+
+        function calculateDerivatives(x, y) {
+            const dE_dx = 2 * x + 0.6 * y + 4;
+            const dE_dy = 0.6 * x + y + 3;
+            return { dE_dx, dE_dy };
+        }
+
+        async function geminiAnalyzeAndRecommend() {
+            const outputDiv = document.getElementById('analysis-output');
+            const loadingDiv = document.getElementById('analysis-loading');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const apiKey = "AIzaSyBnI0lw4lmk7qyzNsj5zjC516EMqp9kKbc";
+            const x = parseFloat(document.getElementById('carga-cpu').value);
+            const y = parseFloat(document.getElementById('temperatura').value);
+            const h = parseFloat(document.getElementById('horas-uso').value) || 0;
+            const E_val = window.E(x, y);
+            const energia_total = E_val * h;
+            const derivatives = calculateDerivatives(x, y);
+            const context = document.getElementById('gemini-context').value.trim();
+            const display_cpu_percent = x * 10;
+            const display_temp_celsius = (y * 10) + 20;
+
+            analyzeBtn.disabled = true;
+            loadingDiv.classList.remove('hidden');
+            outputDiv.innerHTML = ''; 
+
+            // --- PROMPT DE GEMINI ACTUALIZADO PARA SER MÁS ENTENDIBLE ---
+            const systemPrompt = `
+                Eres un asistente experto en optimización energética. Tu objetivo es explicarle a un usuario, de forma sencilla, qué está pasando en su simulación.
+                
+                El modelo de consumo es E(x, y) = x^2 + 0.5y^2 + 0.6xy + 4x + 3y + 10 (Potencia en kW).
+                Imagina que esto es una colina: 'x' (Carga) es moverse de Este a Oeste, 'y' (Temperatura) es moverse de Norte a Sur. El valor 'E' es la altitud (cuánta energía se consume).
+                
+                El "Gradiente" (dE/dx y dE/dy) nos dice qué tan inclinada está la colina en el punto actual. Un número alto significa que está muy inclinado.
+                
+                IMPORTANTE: El modelo usa 'x' y 'y' en una escala interna de 0 a 10.
+                - 'x' (Carga) se muestra al usuario como 0-100%.
+                - 'y' (Temperatura) se muestra al usuario en un rango de 20°C a 120°C.
+                
+                Tu análisis debe ser FÁCIL DE ENTENDER. Evita el lenguaje técnico. Usa el formato Markdown.
+                
+                ## 1. ¿Dónde Estamos Ahora?
+                Explica brevemente el consumo actual (E en kW).
+                Compara la sensibilidad (el gradiente): ¿Qué tan sensible es el consumo a la Carga (dE/dx) vs. la Temperatura (dE/dy)?
+                
+                ## 2. Recomendación Sencilla
+                Basándote en cuál derivada es MÁS ALTA (en valor absoluto), dile al usuario cuál es la "palanca" más efectiva para ahorrar energía.
+                Por ejemplo: "El consumo es MUCHO más sensible a la Carga (x) que a la Temperatura (y). Para ahorrar más energía, enfócate en reducir la carga."
+                Menciona cómo esto afectará la Energía Total (kWh) en el tiempo.
+                
+                Responde únicamente con el contenido del informe en Markdown.
+            `;
+            // --- FIN DEL PROMPT ACTUALIZADO ---
+
+            const userQuery = `
+                Analiza el siguiente punto de simulación:
+                - Parámetros del Modelo (escala 0-10):
+                  - Carga (x): ${x.toFixed(2)}
+                  - Temperatura (y): ${y.toFixed(2)}
+                - Valores de UI (Informativo):
+                  - Carga (UI): ${display_cpu_percent.toFixed(1)}%
+                  - Temperatura (UI): ${display_temp_celsius.toFixed(1)} °C
+                - Parámetros de Tiempo:
+                  - Horas de Uso (h): ${h.toFixed(1)}
+                - Resultados Calculados:
+                  - Potencia Instantánea (E): ${E_val.toFixed(3)} kW
+                  - Energía Total (E * h): ${energia_total.toFixed(3)} kWh
+                - Gradiente (Sensibilidad del Modelo):
+                  - dE/dx: ${derivatives.dE_dx.toFixed(3)}
+                  - dE/dy: ${derivatives.dE_dy.toFixed(3)}
+                - Contexto adicional: ${context || 'Ninguno'}
+            `;
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            let attempts = 0, maxAttempts = 3, success = false, resultText = '';
+            while (attempts < maxAttempts && !success) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) {
+                        if (response.status === 403) throw new Error(`HTTP error! status: ${response.status} (Prohibido). Revisa que tu clave de API de Gemini sea correcta y esté habilitada.`);
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        resultText = candidate.content.parts[0].text;
+                        success = true;
+                    } else { throw new Error("Respuesta del modelo incompleta o vacía."); }
+                } catch (error) {
+                    console.error(`Attempt ${attempts + 1} failed:`, error);
+                    attempts++;
+                    if (attempts < maxAttempts) { await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000)); }
+                    else { resultText = `<h2>Error de Conexión</h2><p>No se pudo obtener el análisis después de ${maxAttempts} intentos.</p><p>Verifica tu conexión y vuelve a intentarlo. (Detalle: ${error.message})</p>`; }
+                }
+            }
+            outputDiv.innerHTML = resultText.replace(/## (.*)/g, '<h2>$1</h2>').replace(/\* (.*)/g, '<li>$1</li>').replace(/\n/g, '<br>');
+            analyzeBtn.disabled = false;
+            loadingDiv.classList.add('hidden');
+        }
+
+        function init3D() {
+            const container = document.getElementById('visualization-container');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x020617);
+            
+            // --- CÁMARA ACTUALIZADA ---
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(20, 30, 20); // 'y' es 30 para bajar la gráfica
+            // --- FIN DE ACTUALIZACIÓN ---
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; 
+            controls.dampingFactor = 0.05;
+            controls.screenSpacePanning = false;
+            controls.minDistance = 5;
+            controls.maxDistance = 50;
+            controls.maxPolarAngle = Math.PI / 2 - 0.1;
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 20, 10);
+            scene.add(directionalLight);
+            const axesHelper = new THREE.AxesHelper(12);
+            scene.add(axesHelper);
+            const planeGeometry = new THREE.PlaneGeometry(DOMAIN_SIZE, DOMAIN_SIZE);
+            const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x1e293b, side: THREE.DoubleSide, opacity: 0.2, transparent: true });
+            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            plane.rotation.x = Math.PI / 2;
+            plane.position.set(DOMAIN_SIZE / 2, 0, DOMAIN_SIZE / 2);
+            scene.add(plane);
+            createSurface();
+            createIndicator();
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function createSurface() {
+            if (surfaceMesh) scene.remove(surfaceMesh);
+            const gridCount = 50, size = DOMAIN_SIZE, step = size / (gridCount - 1);
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [], colors = [], indices = [];
+            const colorScale = new THREE.Color();
+            const minE = window.E(0, 0), maxE = window.E(DOMAIN_SIZE, DOMAIN_SIZE);
+            for (let i = 0; i < gridCount; i++) {
+                for (let j = 0; j < gridCount; j++) {
+                    const x = i * step, y = j * step, z = window.E(x, y);
+                    const normalizedE = (z - minE) / (maxE - minE);
+                    colorScale.setHSL(0.33 * (1.0 - normalizedE), 1.0, 0.5); 
+                    vertices.push(x, z * 0.1, y); 
+                    colors.push(colorScale.r, colorScale.g, colorScale.b);
+                }
+            }
+            
+            // --- CORRECCIÓN DEL BUG DE LA GRÁFICA NEGRA ---
+            for (let i = 0; i < gridCount - 1; i++) {
+                for (let j = 0; j < gridCount - 1; j++) { 
+                    const a = i * gridCount + j, b = (i + 1) * gridCount + j;
+                    const c = (i + 1) * gridCount + (j + 1), d = i * gridCount + (j + 1);
+                    indices.push(a, b, d);
+                    indices.push(b, c, d);
+                }
+            }
+            // --- FIN DE LA CORRECCIÓN ---
+            
+            geometry.setIndex(indices);
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            geometry.computeVertexNormals();
+            const material = new THREE.MeshPhongMaterial({
+                vertexColors: true, side: THREE.DoubleSide,
+                transparent: true, opacity: 0.9, shininess: 50
+            });
+            surfaceMesh = new THREE.Mesh(geometry, material);
+            surfaceMesh.position.set(-DOMAIN_SIZE / 2, 0, -DOMAIN_SIZE / 2); 
+            scene.add(surfaceMesh);
+        }
+
+        function createIndicator() {
+            const geometry = new THREE.SphereGeometry(0.3, 32, 32);
+            const material = new THREE.MeshPhongMaterial({ color: 0xc084fc, emissive: 0xc084fc, emissiveIntensity: 0.7 });
+            sphereIndicator = new THREE.Mesh(geometry, material);
+            scene.add(sphereIndicator);
+        }
+
+        function updateIndicator(x, y, h) {
+            const E_val = window.E(x, y), energia_total = E_val * h;
+            const scaled_E = E_val * 0.1, derivatives = calculateDerivatives(x, y);
+            const display_cpu_percent = x * 10;
+            const display_temp_celsius = (y * 10) + 20;
+            if (sphereIndicator) {
+                sphereIndicator.position.set(x - DOMAIN_SIZE / 2, scaled_E, y - DOMAIN_SIZE / 2);
+            }
+            document.getElementById('carga-value').textContent = x.toFixed(1);
+            document.getElementById('temperatura-value').textContent = y.toFixed(1);
+            document.getElementById('carga-value-ui').textContent = `${display_cpu_percent.toFixed(1)}%`;
+            document.getElementById('temp-value-ui').textContent = `${display_temp_celsius.toFixed(1)} °C`;
+            document.getElementById('horas-value').textContent = h.toFixed(1);
+            document.getElementById('energia-total-result').textContent = energia_total.toFixed(3);
+            document.getElementById('analysis-x-val').textContent = x.toFixed(2);
+            document.getElementById('analysis-y-val').textContent = y.toFixed(2);
+            document.getElementById('analysis-dEdx').textContent = derivatives.dE_dx.toFixed(3);
+            document.getElementById('analysis-dEdy').textContent = derivatives.dE_dy.toFixed(3);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); 
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('visualization-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        const cargaRange = document.getElementById('carga-cpu');
+        const temperaturaRange = document.getElementById('temperatura');
+        const horasInput = document.getElementById('horas-uso');
+        function handleRangeChange() {
+            const x = parseFloat(cargaRange.value);
+            const y = parseFloat(temperaturaRange.value);
+            const h = parseFloat(horasInput.value) || 0;
+            updateIndicator(x, y, h);
+        }
+        cargaRange.addEventListener('input', handleRangeChange);
+        temperaturaRange.addEventListener('input', handleRangeChange);
+        horasInput.addEventListener('input', handleRangeChange);
+
+        window.onload = function () {
+            init3D();
+            animate();
+            handleRangeChange();
+            document.getElementById('analyze-btn').addEventListener('click', geminiAnalyzeAndRecommend);
+        };
+    </script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script>
+function generateParticles(count = 150) {
+    const container = document.getElementById("particle-container");
+
+    for (let i = 0; i < count; i++) {
+        const particle = document.createElement("div");
+        particle.classList.add("particle");
+
+        particle.style.left = Math.random() * 100 + "vw";
+
+        const size = Math.random() * 4 + 2;
+        particle.style.width = size + "px";
+        particle.style.height = size + "px";
+
+        const hue = Math.floor(Math.random() * 360);
+        particle.style.background = `hsl(${hue}, 80%, 60%)`;
+
+        const duration = Math.random() * 8 + 6;
+        particle.style.animationDuration = duration + "s";
+
+        particle.style.animationDelay = Math.random() * -duration + "s";
+
+        container.appendChild(particle);
+    }
+}
+
+generateParticles(200);
+</script>
+
+
+    <style>
+/* 💡 Estilo suave para tarjetas con electricidad reducida */
+.low-electricity::before {
+    filter: blur(6px) !important;
+    opacity: 0.15 !important;
+    animation: electricFlow 8s linear infinite !important;
+}
+
+.low-electricity::after {
+    opacity: 0.25 !important;
+    filter: brightness(1) !important;
+    animation: electricPulse 5s ease-in-out infinite !important;
+}
+</style>
+</body>
+</html>
